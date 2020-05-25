@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+  mysql: # MySQLサービス名
+    image: mysql:5.7 # dockerhubのイメージ名
+    volumes:
+      - mysql_data:/var/lib/mysql # mysql_dataというボリューム名でMySQLのデータを保存
+      - .\mysql\initdb.d:/docker-entrypoint-initdb.d # 構築後に実行するSQLを配置(オプション)
+      #- ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf # MySQLの設定ファイル(オプション)
+    restart: always # コンテナに連動して自動起動
+    ports:
+      - "3306:3306" # Windows側ポート:Linux側ポート
+    environment:
+      MYSQL_ROOT_PASSWORD: "password" # MySQLのrootユーザのパスワード
+
+  php-apache: # phpのサービス名
+    build: .\php # phpフォルダにあるDockerfileでビルド
+    volumes:
+      - .\htdocs:/var/www/html # htdocsフォルダをapacheのルートディレクトリにマッピング
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql
+
+  phpmyadmin: # phpmyadminサービス名
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql # MySQLのサービス名を指定
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql # MySQLが起動終わってから起動
+
+volumes:
+    mysql_data: {}  # mysql_dataという名前でボリュームを作成。{}は空って意味かな。
